@@ -1,0 +1,37 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+
+   font-family : Inter,system-ui,Avenir,Helvetica,Arial,sans-serif,
+}
+
+/* Thin scrollbar for Chrome, Edge, and Safari */
+::-webkit-scrollbar {
+   width: 6px;
+   /* Adjust the width to make it thinner */
+}
+
+::-webkit-scrollbar-track {
+   background: #f1f1f1;
+   /* Track background color */
+}
+
+::-webkit-scrollbar-thumb {
+   background-color: #888;
+   /* Scrollbar color */
+   border-radius: 10px;
+   /* Round corners */
+}
+
+::-webkit-scrollbar-thumb:hover {
+   background: #555;
+   /* Color on hover */
+}
+
+/* Thin scrollbar for Firefox */
+* {
+   scrollbar-width: thin;
+   scrollbar-color: #888 #f1f1f1;
+}
