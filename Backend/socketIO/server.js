@@ -9,8 +9,12 @@ const httpServer = http.createServer(app);
 
 const io = new Server(httpServer,
     {
+        // cors: {
+        //     origin: 'http://localhost:3000',
+        //     methods: ['GET', 'POST'],
+        // },
         cors: {
-            origin: 'http://localhost:3000',
+            origin: 'https://chat-app-chi-fawn.vercel.app',
             methods: ['GET', 'POST'],
         },
     }

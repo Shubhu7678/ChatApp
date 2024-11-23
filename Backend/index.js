@@ -19,8 +19,12 @@ app.use(cookieParser());
 
 app.use(cors({
     credentials: true,
-    origin: 'http://localhost:3000',
+    origin: 'https://chat-app-chi-fawn.vercel.app',
 }));
+// app.use(cors({
+//     credentials: true,
+//     origin: 'http://localhost:3000',
+// }));
 
 // Connect to MongoDB
 
