@@ -26,6 +26,10 @@ app.use(cors({
 
 connectDB();
 
+app.get('/', (req, res) => {
+    res.send('Hello World!');
+})
+
 // Routes
 app.use('/user', userRoutes);
 app.use('/message', messageRoutes);
