@@ -1,4 +1,5 @@
-const BASE_URL = import.meta.env.VITE_BASE_URL;
+// const BASE_URL = import.meta.env.VITE_BASE_URL;
+const BASE_URL = 'https://chat-app-api-beta.vercel.app';
 
 export const authApiEndpoints = {
 
