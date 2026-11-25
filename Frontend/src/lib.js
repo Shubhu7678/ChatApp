@@ -20,3 +20,26 @@ export const formatDistance = (m) => (m >= 1000 ? `${(m / 1000).toFixed(1)} km` 
 
 export const formatTime = (ts) =>
   new Date(ts).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+
+export const DEFAULT_RADIUS = 1000;
+export const REACTIONS = ['👍', '❤️', '😂', '😮', '😢', '🔥', '👏', '🙏'];
+
+export function loadRadius() {
+  const n = Number(read('nc.radius'));
+  return n >= 200 && n <= 5000 ? n : DEFAULT_RADIUS;
+}
+export const saveRadius = (r) => write('nc.radius', String(r));
+
+// blocked users are stored as { [id]: name } so they can be listed and unblocked
+export function loadBlocked() {
+  try { return JSON.parse(read('nc.blocked') || '{}') || {}; } catch { return {}; }
+}
+export const saveBlocked = (b) => write('nc.blocked', JSON.stringify(b));
+
+// Stable pseudo-angle from an id. The radar uses this instead of the real
+// bearing so it never reveals which direction someone is in.
+export function angleFor(id) {
+  let h = 0;
+  for (let i = 0; i < id.length; i++) h = (h * 31 + id.charCodeAt(i)) >>> 0;
+  return (h % 3600) / 3600 * Math.PI * 2;
+}

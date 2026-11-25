@@ -39,7 +39,10 @@ function Chat({ profile }) {
   return (
     <div className="flex h-full overflow-hidden">
       <div className={`${showChat ? 'hidden' : 'block'} h-full w-full md:block md:w-80 md:shrink-0 lg:w-96`}>
-        <Sidebar me={profile} nearby={chat.nearby} connected={chat.connected} active={active} unread={chat.unread} onOpen={open} />
+        <Sidebar
+          me={profile} nearby={chat.nearby} connected={chat.connected} active={active} unread={chat.unread} onOpen={open}
+          radius={chat.radius} limits={chat.limits} onRadius={chat.setRadius} blocked={chat.blocked} onUnblock={chat.unblock}
+        />
       </div>
       <div className={`${showChat ? 'block' : 'hidden'} h-full min-w-0 flex-1 md:block`}>
         <ChatPanel
@@ -49,8 +52,16 @@ function Chat({ profile }) {
           nearbyPeer={nearbyPeer}
           messages={isPublic ? chat.publicMsgs : chat.dms[active] || []}
           connected={chat.connected}
+          radius={chat.radius}
+          blocked={chat.blocked}
+          typing={chat.typing}
+          reactions={chat.reactions}
           onSend={chat.send}
           onBack={() => setShowChat(false)}
+          onTyping={chat.sendTyping}
+          onReact={(msgId, scope, emoji) => chat.react(msgId, scope, emoji)}
+          onBlock={chat.block}
+          onReport={(user, text) => chat.report(user, text, 'message')}
         />
       </div>
     </div>
