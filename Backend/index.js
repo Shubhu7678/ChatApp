@@ -32,8 +32,16 @@ const users = new Map(); // id (client generated) -> user
 const reports = new Map(); // reportedId -> { reporters:Set, ts }
 const muted = new Map(); // id -> until (ms)
 
-const publicUser = (u) => ({ id: u.id, name: u.name, color: u.color });
+const publicUser = (u) => ({ id: u.id, name: u.name, color: u.color, emoji: u.emoji, status: u.status });
 const clean = (s, max) => String(s ?? '').replace(/\s+/g, ' ').trim().slice(0, max);
+const segmenter = new Intl.Segmenter();
+// accepts exactly one emoji, otherwise ''
+const cleanEmoji = (s) => {
+  const t = String(s ?? '').trim();
+  if (!t || t.length > 16 || [...segmenter.segment(t)].length !== 1) return '';
+  return /\p{Extended_Pictographic}/u.test(t) ? t : '';
+};
+const cleanStatus = (s) => maskProfanity(clean(s, 60));
 const clampRadius = (r) => Math.min(MAX_RADIUS, Math.max(MIN_RADIUS, Math.round(Number(r)) || DEFAULT_RADIUS));
 
 // Two people can interact only if neither blocked the other and each is
@@ -113,10 +121,24 @@ io.on('connection', (socket) => {
     me = {
       id, socketId: socket.id, name, lat, lng, blocked,
       color: clean(p.color, 16) || '#1f7a5c',
+      emoji: cleanEmoji(p.emoji),
+      status: cleanStatus(p.status),
       radius: clampRadius(p.radius ?? DEFAULT_RADIUS),
     };
     users.set(id, me);
     ack?.({ ok: true, me: publicUser(me), radius: me.radius, minRadius: MIN_RADIUS, maxRadius: MAX_RADIUS, reactions: REACTIONS });
+    scheduleRefresh();
+  });
+
+  socket.on('profile', (p = {}, ack) => {
+    if (!me || lightLimited()) return;
+    const name = clean(p.name, 20);
+    if (name.length < 2) return ack?.({ ok: false, error: 'Nickname must be at least 2 characters' });
+    me.name = name;
+    me.emoji = cleanEmoji(p.emoji);
+    me.status = cleanStatus(p.status);
+    me.color = clean(p.color, 16) || me.color;
+    ack?.({ ok: true, me: publicUser(me) });
     scheduleRefresh();
   });
 

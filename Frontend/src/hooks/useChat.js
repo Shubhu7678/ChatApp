@@ -8,7 +8,7 @@ const TYPING_TTL_MS = 4000;
 
 const append = (list = [], msg) => [...list, msg].slice(-MAX_PER_THREAD);
 
-export default function useChat(profile, coords) {
+export default function useChat(profile, coords, onIncoming) {
   const [connected, setConnected] = useState(false);
   const [replaced, setReplaced] = useState(false);
   const [nearby, setNearby] = useState([]);
@@ -29,6 +29,8 @@ export default function useChat(profile, coords) {
   const radiusRef = useRef(radius);
   const blockedRef = useRef(blocked);
   const reactionsRef = useRef(reactions);
+  const profileRef = useRef(profile);
+  const incomingRef = useRef(onIncoming);
   const typingTimers = useRef({});
   const radiusTimer = useRef(null);
   const lastSent = useRef(0);
@@ -37,9 +39,11 @@ export default function useChat(profile, coords) {
   radiusRef.current = radius;
   blockedRef.current = blocked;
   reactionsRef.current = reactions;
+  profileRef.current = profile;
+  incomingRef.current = onIncoming;
 
   const hasFix = !!coords;
-  const { id, name, color } = profile;
+  const { id, name } = profile;
 
   useEffect(() => {
     if (!hasFix || !name) return;
@@ -48,8 +52,9 @@ export default function useChat(profile, coords) {
 
     const join = () => {
       const c = coordsRef.current;
+      const { name: n, color, emoji, status } = profileRef.current;
       socket.emit('join', {
-        id, name, color, lat: c.lat, lng: c.lng,
+        id, name: n, color, emoji, status, lat: c.lat, lng: c.lng,
         radius: radiusRef.current, blocked: Object.keys(blockedRef.current),
       }, (res) => {
         if (!res?.ok) return;
@@ -67,7 +72,7 @@ export default function useChat(profile, coords) {
 
     const isBlocked = (uid) => uid in blockedRef.current;
     const bump = (key) => {
-      if (activeRef.current !== key) setUnread((u) => ({ ...u, [key]: (u[key] || 0) + 1 }));
+      if (activeRef.current !== key || document.hidden) setUnread((u) => ({ ...u, [key]: (u[key] || 0) + 1 }));
     };
     const clearTyping = (scope, uid) => {
       clearTimeout(typingTimers.current[`${scope}:${uid}`]);
@@ -82,7 +87,7 @@ export default function useChat(profile, coords) {
       if (isBlocked(msg.from.id)) return;
       setPublicMsgs((m) => append(m, msg));
       clearTyping('public', msg.from.id);
-      if (msg.from.id !== id) bump('public');
+      if (msg.from.id !== id) { bump('public'); incomingRef.current?.(msg, 'public'); }
     });
     socket.on('dm', (msg) => {
       const mine = msg.from.id === id;
@@ -90,7 +95,7 @@ export default function useChat(profile, coords) {
       if (!mine && isBlocked(peerId)) return;
       if (!mine) setPeers((p) => ({ ...p, [peerId]: { ...p[peerId], ...msg.from } }));
       setDms((d) => ({ ...d, [peerId]: append(d[peerId], msg) }));
-      if (!mine) { clearTyping(peerId, peerId); bump(peerId); }
+      if (!mine) { clearTyping(peerId, peerId); bump(peerId); incomingRef.current?.(msg, peerId); }
     });
 
     socket.on('typing', ({ from, scope, on }) => {
@@ -117,7 +122,16 @@ export default function useChat(profile, coords) {
       Object.values(timers).forEach(clearTimeout);
       socket.disconnect(); socketRef.current = null; setConnected(false);
     };
-  }, [hasFix, id, name, color]);
+  }, [hasFix, id, !!name]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Coming back to the tab counts as reading the open thread.
+  useEffect(() => {
+    const onVisible = () => {
+      if (!document.hidden) setUnread((u) => (u[activeRef.current] ? { ...u, [activeRef.current]: 0 } : u));
+    };
+    document.addEventListener('visibilitychange', onVisible);
+    return () => document.removeEventListener('visibilitychange', onVisible);
+  }, []);
 
   // Throttled location updates after the first join.
   useEffect(() => {
@@ -149,6 +163,12 @@ export default function useChat(profile, coords) {
     radiusTimer.current = setTimeout(() => socketRef.current?.emit('radius', { radius: r }), 300);
   }, []);
 
+  const updateProfile = useCallback((p) => new Promise((resolve) => {
+    const s = socketRef.current;
+    if (!s) return resolve({ ok: true }); // not connected yet; the new values are sent on join
+    s.timeout(5000).emit('profile', p, (err, res) => resolve(err ? { ok: false, error: 'No response' } : res || { ok: true }));
+  }), []);
+
   const sendTyping = useCallback((scope, on) => {
     socketRef.current?.emit('typing', { scope, on });
   }, []);
@@ -177,7 +197,7 @@ export default function useChat(profile, coords) {
 
   return {
     connected, replaced, nearby, publicMsgs, dms, peers, unread, active, open, send,
-    radius, limits, setRadius, blocked, block, unblock, report,
+    radius, limits, setRadius, updateProfile, blocked, block, unblock, report,
     typing, sendTyping, reactions, react,
   };
 }

@@ -18,7 +18,7 @@ function Row({ active, onClick, children }) {
   );
 }
 
-export default function Sidebar({ me, nearby, connected, active, unread, onOpen, radius, limits, onRadius, blocked, onUnblock }) {
+export default function Sidebar({ me, nearby, connected, active, unread, onOpen, radius, limits, onRadius, blocked, onUnblock, onProfile }) {
   const [tab, setTab] = useState('list');
   const blockedList = Object.entries(blocked);
 
@@ -32,10 +32,14 @@ export default function Sidebar({ me, nearby, connected, active, unread, onOpen,
             {connected ? `${nearby.length} ${nearby.length === 1 ? 'person' : 'people'} within ${formatDistance(radius)}` : 'Connecting…'}
           </p>
         </div>
-        <div className="ml-auto flex items-center gap-2">
+        <button
+          onClick={onProfile}
+          aria-label="Edit your profile"
+          className="ml-auto flex items-center gap-2 rounded-full py-1 pl-3 pr-1 hover:bg-sunk"
+        >
           <span className="hidden text-sm font-semibold sm:inline md:hidden lg:inline">{me.name}</span>
-          <Avatar name={me.name} color={me.color} size={32} />
-        </div>
+          <Avatar name={me.name} color={me.color} emoji={me.emoji} size={32} />
+        </button>
       </header>
 
       <div className="border-b border-line px-4 py-3">
@@ -92,10 +96,10 @@ export default function Sidebar({ me, nearby, connected, active, unread, onOpen,
             )}
             {nearby.map((u) => (
               <Row key={u.id} active={active === u.id} onClick={() => onOpen(u.id)}>
-                <Avatar name={u.name} color={u.color} />
+                <Avatar name={u.name} color={u.color} emoji={u.emoji} />
                 <span className="min-w-0">
                   <span className="block truncate font-semibold">{u.name}</span>
-                  <span className="block text-xs text-mute">{formatDistance(u.distance)} away</span>
+                  <span className="block truncate text-xs text-mute">{formatDistance(u.distance)}{u.status ? ` · ${u.status}` : ' away'}</span>
                 </span>
                 <Badge n={unread[u.id]} />
               </Row>

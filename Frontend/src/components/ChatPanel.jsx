@@ -75,10 +75,10 @@ export default function ChatPanel({
           </>
         ) : (
           <>
-            <Avatar name={peer?.name} color={peer?.color} />
+            <Avatar name={peer?.name} color={peer?.color} emoji={peer?.emoji} />
             <div>
               <h2 className="font-bold leading-tight">{peer?.name}</h2>
-              <p className="text-xs text-mute">{nearbyPeer ? `${formatDistance(nearbyPeer.distance)} away` : 'Out of range'}</p>
+              <p className="text-xs text-mute">{nearbyPeer ? `${formatDistance(nearbyPeer.distance)} away` : 'Out of range'}{peer?.status ? ` · ${peer.status}` : ''}</p>
             </div>
           </>
         )}

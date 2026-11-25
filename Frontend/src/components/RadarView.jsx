@@ -34,8 +34,8 @@ export default function RadarView({ me, nearby, radius, onOpen }) {
               className="cursor-pointer outline-none [&:focus-visible>circle]:stroke-ink"
             >
               <circle cx={x} cy={y} r="15" fill={u.color} stroke="white" strokeWidth="2" />
-              <text x={x} y={y + 3.5} textAnchor="middle" fill="white" fontSize="10" fontWeight="700" pointerEvents="none">
-                {initials(u.name)}
+              <text x={x} y={y + 3.5} textAnchor="middle" fill="white" fontSize={u.emoji ? 13 : 10} fontWeight="700" pointerEvents="none">
+                {u.emoji || initials(u.name)}
               </text>
             </g>
           );
